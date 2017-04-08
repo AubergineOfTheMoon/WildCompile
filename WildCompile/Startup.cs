@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using WebSocketManager;
 
 namespace WildCompile
 {
@@ -29,6 +30,8 @@ namespace WildCompile
         {
             // Add framework services.
             services.AddMvc();
+            services.AddWebSocketManager();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,6 +39,8 @@ namespace WildCompile
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            app.MapWebSocketManager("/ws", app.ApplicationServices.GetRequiredService<WebSockets.IOHandler>());
 
             if (env.IsDevelopment())
             {
