@@ -9,9 +9,8 @@
 </head>
 <body>
     <div id="ideArea">
-    <div id="editor" contenteditable="true">
-
-    </div>
+        <div id="editor" contenteditable="true">
+        </div>
         <button id="work" onclick="sendToServer()">
             Compile
         </button>
@@ -84,7 +83,7 @@
                 $("#ideArea").show();
             }
         }
-});
+    });
     var seperatorRegex = /W/;
     var reservedWords = [
         "abstract", "as", "base", "bool", "break", "byte",
@@ -110,37 +109,20 @@
         return tab;
     }
 
-    $("#ideArea").keyup(function (keyEvent) {
-        if (keyEvent.which === 9) {
-
-        }
-        return;
-        let allText = $(this).html();
-        allText = allText.replace(/<\/div>/, "");
-        let lines = allText.split(/<div>/);
-        for (let line = 0; line < lines.length; line++) {
-            let words = lines[line].split(seperatorRegex);
-            let splitter = lines[line].split(/w/);
-            for (let word = 0; word < words.length; word++) {
-
-            }
-        }
-        });
-
     function sendToServer() {
-        $("#output-container").show();
+	    let rawText =  $("#ideArea").text();
+	    $("#outputBox").html("Code Sent: " + rawText);
         $.ajax({
-            type: "POST",
-            accpets: "application/json",
-            contentType: "application/json",
-            data: JSON.stringify({code: editor.value(), filename: "Main.cs", key: socketKey }),
-            url: apiEndpoint,
-            success: function (data) {
-
+            type:"POST",
+            url:apiEndpoint,
+            success:function() {
+            
             },
-            failure: function (status, error) {
+            failure:function(status, error) {
                 $("#outputBox").addClass("error");
                 $("#outputBox").html(error);
+                $("#compileError").html("Uh-oh! A happy accident!<br>"+error);
+
             }
         });
     }
