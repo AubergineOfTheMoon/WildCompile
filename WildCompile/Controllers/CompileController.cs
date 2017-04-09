@@ -22,6 +22,10 @@ namespace WildCompile.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CompileInput compile)
         {
+            if (compile.pass != "PASS")
+            {
+                return BadRequest();
+            }
             compile.filename = @"C:\Compile\Main.cs";
             if (System.IO.File.Exists(endResult))
             {
@@ -58,12 +62,11 @@ namespace WildCompile.Controllers
 
             Process userRun = new Process();
             userRun.StartInfo.FileName = "C:\\Compile\\Runner\\Runner.exe"; //TODO:Enter file name
-            userRun.StartInfo.RedirectStandardOutput = true;
             //userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
-            userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://localhost:62299/ws";
+            //userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://localhost:62299/ws";
+            //ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws
+            userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
             userRun.Start();
-
-            output = userRun.StandardOutput.ReadToEnd();
 
             return Ok();
         }

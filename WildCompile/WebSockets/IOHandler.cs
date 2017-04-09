@@ -23,7 +23,15 @@ namespace WildCompile.WebSockets
         public override async Task ReceiveAsync(WebSocket socket, WebSocketReceiveResult result, byte[] buffer)
         {
             var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-            var content = JsonConvert.DeserializeObject<Models.SocketMessage>(message);
+            SocketMessage content = null;
+            try
+            {
+                content = JsonConvert.DeserializeObject<Models.SocketMessage>(message);
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
             switch (content.cmd.ToUpper())
             {
                 case "INPUT":
@@ -40,20 +48,27 @@ namespace WildCompile.WebSockets
                     break;
                 case "OUTPUT":
                     //Server
-                    var msg = new SocketMessage();
-                    msg.cmd = "clear";
-                    var msgText = JsonConvert.SerializeObject(msg);
-                    await SendMessageAsync(content.id, msgText);
+                    //var msg = new SocketMessage();
+                    //msg.cmd = "clear";
+                    //var msgText = JsonConvert.SerializeObject(msg);
+                    //await SendMessageAsync(content.id, msgText);
 
                     //Sets the server id of the user
                     WebSocketConnectionManager.GetSocketById(content.id).ServerId = WebSocketConnectionManager.GetId(socket);
 
-                    msg = new SocketMessage();
+                    var msg = new SocketMessage();
                     msg.cmd = "print";
                     msg.id = content.id;
                     msg.data = content.data;
-                    msgText = JsonConvert.SerializeObject(msg);
+                    var msgText = JsonConvert.SerializeObject(msg);
+#if DEBUG
+                    if (content.id.ToUpper() != "TESTING")
+                    {
+                        await SendMessageAsync(content.id, msgText);
+                    }
+#else
                     await SendMessageAsync(content.id, msgText);
+#endif
                     break;
                 case "ASKINPUT":
                     //Sets the server id of the user
@@ -64,7 +79,14 @@ namespace WildCompile.WebSockets
                         cmd = "input"
                     };
                     var askInputMsgText = JsonConvert.SerializeObject(askInputMsg);
+#if DEBUG
+                    if (content.id.ToUpper() != "TESTING")
+                    {
+                        await SendMessageAsync(content.id, askInputMsgText);
+                    }
+#else
                     await SendMessageAsync(content.id, askInputMsgText);
+#endif
                     break;
                 default:
                     break;

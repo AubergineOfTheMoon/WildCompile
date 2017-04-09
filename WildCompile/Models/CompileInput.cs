@@ -10,5 +10,6 @@ namespace WildCompile.Models
         public string code;
         public string filename;
         public string key;
+        public string pass;
     }
 }
