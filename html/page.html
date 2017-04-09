@@ -1,120 +1,265 @@
 <head>
     <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/mode-csharp.js"></script>
 </head>
 <body>
-<div id="ideArea" contenteditable="true">
- 
-</div>
+    <div id="ideArea">
+    <div id="editor" contenteditable="true">
 
-<button onclick="sendToServer()">
-Compile
-</button>
+    </div>
+        <button id="work" onclick="sendToServer()">
+            Compile
+        </button>
+    </div>
+    <div id="output-container" hidden>
+        <h4>
+            Output
+        </h4>
+        <div id="outputBox">
 
-<h4>
-Output
-</h4>
-<div id="outputBox">
+        </div>
+        <input id="inputBox" type="textbox" hidden>
+    </div>
+    <button id="btn">click</button>
+    <div id="myModal" class="modal">
 
-</div>
-<input id="inputBox" type="textbox" hidden>
+  <!-- Modal content -->
+  <div class="modal-content">
+  <img src="https://media.giphy.com/media/rYEAkYihZsyWs/giphy.gif"/>
+    <span class="close">&times;</span>
+    <div id="compileError">Uh-oh! A happy accident!</div>
+    <!-- Error code -->
+  </div>
 </body>
 <script>
-  var socketKey;
-var tabSize = 4;
-var commandDict = {
-	clear : function(data) {
-  	$("#outputBox").empty();
-  },
-  input : function(data) {
-  	$("#inputBox").show();
-    $("#inputBox").focus();
-  },
-  print : function(data) {
-  	$("#outputBox").append(getFormattedString(data));
-  },
-  register : function(data) {
-  	socketKey = data;
-  },
-}
-const apiEndpoint = "http://ec2-54-234-53-50.compute-1.amazonaws.com/api/compile";
-const wsURL = "ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
-$(document).ready(function() {
-	// setup web socket
-  socket = new WebSocket(wsURL);
-  socket.onrecieve(function(evt) {
-  	let dataJson = JSON.parse(evt.data);
-    commandDict[dataJson.cmd](dataJson.data);
-  });
-  $("#inputBox").keyup(function(evt) {
-  	if (evt.keyCode === 13) {
-    	socket.send("{cmd:\"input\",data:\"" + $(this).val() + "\"}");
-      $(this).hide();
+    var socketKey;
+    var tabSize = 4;
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chrome") ;
+    editor.getSession().setMode("ace/mode/csharp");
+    var commandDict = {
+        clear: function (data) {
+            $("#outputBox").empty();
+        },
+        input: function (data) {
+            $("#inputBox").show();
+            $("#inputBox").focus();
+        },
+        print: function (data) {
+            $("#outputBox").append(getFormattedString(data));
+        },
+        register: function (data) {
+            socketKey = data;
+        },
     }
-  });
+    const apiEndpoint = "/api/compile";
+    //const wsURL = "ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
+    const wsURL = "ws://localhost:62299/ws";
+    $(document).ready(function () {
+        // setup web socket
+        socket = new WebSocket(wsURL);
+        socket.onmessage = function (evt) {
+            let dataJson = JSON.parse(evt.data);
+            commandDict[dataJson.cmd](dataJson.data);
+        };
+        var modal = document.getElementById('myModal');
+        btn.onclick = function() {
+            modal.style.display = "block";
+            $("#ideArea").hide();
+        }
+        var span = document.getElementsByClassName("close")[0];
+        span.onclick = function() {
+            modal.style.display = "none";
+            $("#ideArea").show();
+
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                $("#ideArea").show();
+            }
+        }
 });
-var seperatorRegex = /W/;
-var reservedWords = [
-  "abstract",	"as",	"base",	"bool",	"break",	"byte",
-  "case",	"catch",	"char",	"checked",	"class",	"const",
-  "continue",	"decimal",	"default",	"delegate",	"do",	"double",
-  "else",	"enum",	"event",	"explicit",	"extern",	"finally",
-  "fixed",	"float",	"for",	"foreach",	"goto",	"if",
-  "implicit",	"in",	"int",	"interface",	"internal",	"is",
-  "lock",	"long",	"namespace",	"new",	"null",	"object",
-  "operator",	"out",	"override",	"params",	"private",	
-  "public",	"readonly",	"ref",	"return",	"sbyte",	"sealed",
-  "short",	"sizeof",	"stackalloc",	"static",	"string",	"struct",
-  "switch",	"this",	"throw",	"try",	"typeof",	"unit",
-  "ulong",	"unchecked",	"unsafe",	"ushort",	"using",	"virtual",
-  "void",	"volatile",	"while"
-];
+    var seperatorRegex = /W/;
+    var reservedWords = [
+        "abstract", "as", "base", "bool", "break", "byte",
+        "case", "catch", "char", "checked", "class", "const",
+        "continue", "decimal", "default", "delegate", "do", "double",
+        "else", "enum", "event", "explicit", "extern", "finally",
+        "fixed", "float", "for", "foreach", "goto", "if",
+        "implicit", "in", "int", "interface", "internal", "is",
+        "lock", "long", "namespace", "new", "null", "object",
+        "operator", "out", "override", "params", "private",
+        "public", "readonly", "ref", "return", "sbyte", "sealed",
+        "short", "sizeof", "stackalloc", "static", "string", "struct",
+        "switch", "this", "throw", "try", "typeof", "unit",
+        "ulong", "unchecked", "unsafe", "ushort", "using", "virtual",
+        "void", "volatile", "while"
+    ];
 
-function getFormattedString(rawString) {
-	let formattedString = rawString.replace("\t", getTab()).replace("\n\r","<br/>").replace("\n","<br/>");
-  return formattedString;
-}
-
-function getTab() {
-	let tab = "";
-  for (var i = 0; i < tabSize; i++) {
-  	tab += "&nbsp";
-  }
-  return tab;
-}
-
-$("#ideArea").keyup(function(keyEvent) {
-	if(keyEvent.which === 9) {
-  	
-  }
-	return;
-  let allText = $(this).html();
-  allText = allText.replace(/<\/div>/, "");
-  let lines = allText.split(/<div>/);
-  for (let line = 0; line < lines.length; line++) {
-  	let words = lines[line].split(seperatorRegex);
-    let splitter = lines[line].split(/w/);
-    for (let word = 0; word < words.length; word++) {
-    	
+    function getTab() {
+        let tab = "";
+        for (var i = 0; i < tabSize; i++) {
+            tab += "&nbsp";
+        }
+        return tab;
     }
-});
 
-function sendToServer() {
-	let rawText =  $("#ideArea").text();
-	$("#outputBox").html("Code Sent: " + rawText);
-  $.ajax({
-  	type:"POST",
-    url:apiEndpoint,
-    success:function() {
-    
-    },
-    failure:function(status, error) {
-    	$("#outputBox").addClass("error");
-      $("#outputBox").html(error);
+    $("#ideArea").keyup(function (keyEvent) {
+        if (keyEvent.which === 9) {
+
+        }
+        return;
+        let allText = $(this).html();
+        allText = allText.replace(/<\/div>/, "");
+        let lines = allText.split(/<div>/);
+        for (let line = 0; line < lines.length; line++) {
+            let words = lines[line].split(seperatorRegex);
+            let splitter = lines[line].split(/w/);
+            for (let word = 0; word < words.length; word++) {
+
+            }
+        }
+        });
+
+    function sendToServer() {
+        $("#output-container").show();
+        $.ajax({
+            type: "POST",
+            accpets: "application/json",
+            contentType: "application/json",
+            data: JSON.stringify({code: editor.value(), filename: "Main.cs", key: socketKey }),
+            url: apiEndpoint,
+            success: function (data) {
+
+            },
+            failure: function (status, error) {
+                $("#outputBox").addClass("error");
+                $("#outputBox").html(error);
+            }
+        });
     }
-  });
-}
 </script>
+<style>
+
+body {
+    background-image: url(http://orig15.deviantart.net/9ad2/f/2007/166/c/6/bob_ross_rules__by_tattooryan.jpg);
+    background-color: #666;
+	background-size:     cover;                      
+    background-repeat:   no-repeat;
+    padding-top: 50px;
+    padding-bottom: 20px;
+    margin: 0vh 10vw 0vh 10vw;
+}
+
+/* Wrapping element */
+/* Set some basic padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Set widths on the form inputs since otherwise they're 100% wide */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+/* Carousel */
+.carousel-caption p {
+    font-size: 20px;
+    line-height: 1.4;
+}
+
+/* Make .svg files in the carousel display properly in older browsers */
+.carousel-inner .item img[src$=".svg"] {
+    width: 100%;
+}
+
+/* Hide/rearrange for smaller screens */
+@media screen and (max-width: 767px) {
+    /* Hide captions */
+    .carousel-caption {
+        display: none;
+    }
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(219,0,0,.75); /* Fallback color */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+/* The Close Button */
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#editor {
+     border-radius:5px;
+     border:2px inset #f0f0f0;
+     height:50%
+}
+
+.error {
+  color:red;
+}
+
+button {
+  color:#ffffff;
+  background-color:#A0A969;
+  border:none;
+  padding: 10px 20px 10px 20px;
+  margin-top: 5px;
+  float:right;
+}
+button:hover {
+  color:#ffffff;
+  background-color:#000000;
+  border:none;
+}
+
+#output-container {
+    background-color: #ffffff;
+    border-radius: 5px;
+    padding:5px;
+    margin-top:10vh;
+
+}
+#output-container > h4 {
+    text-align: center;
+}
+
+</style>
