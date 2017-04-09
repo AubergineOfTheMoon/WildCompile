@@ -1,0 +1,79 @@
+<head>
+    <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div id="ideArea" contenteditable="true">
+ 
+</div>
+
+<button onclick="sendToServer()">
+Compile
+</button>
+
+<h4>
+Output:
+</h4>
+<div id="outputBox">
+
+</div>
+
+</body>
+<script>
+    // Courtesy of: http://stackoverflow.com/questions/3972014/get-caret-position-in-contenteditable-div 
+function getCaretPosition(editableDiv) {
+  var caretPos = 0,
+    sel, range;
+  if (window.getSelection) {
+    sel = window.getSelection();
+    if (sel.rangeCount) {
+      range = sel.getRangeAt(0);
+      if (range.commonAncestorContainer.parentNode == editableDiv) {
+        caretPos = range.endOffset;
+      }
+    }
+  } else if (document.selection && document.selection.createRange) {
+    range = document.selection.createRange();
+    if (range.parentElement() == editableDiv) {
+      var tempEl = document.createElement("span");
+      editableDiv.insertBefore(tempEl, editableDiv.firstChild);
+      var tempRange = range.duplicate();
+      tempRange.moveToElementText(tempEl);
+      tempRange.setEndPoint("EndToEnd", range);
+      caretPos = tempRange.text.length;
+    }
+  }
+  return caretPos;
+}
+
+
+var reservedWords = [
+  "abstract",	"as",	"base",	"bool",	"break",	"byte",
+  "case",	"catch",	"char",	"checked",	"class",	"const",
+  "continue",	"decimal",	"default",	"delegate",	"do",	"double",
+  "else",	"enum",	"event",	"explicit",	"extern",	"finally",
+  "fixed",	"float",	"for",	"foreach",	"goto",	"if",
+  "implicit",	"in",	"int",	"interface",	"internal",	"is",
+  "lock",	"long",	"namespace",	"new",	"null",	"object",
+  "operator",	"out",	"override",	"params",	"private",	
+  "public",	"readonly",	"ref",	"return",	"sbyte",	"sealed",
+  "short",	"sizeof",	"stackalloc",	"static",	"string",	"struct",
+  "switch",	"this",	"throw",	"try",	"typeof",	"unit",
+  "ulong",	"unchecked",	"unsafe",	"ushort",	"using",	"virtual",
+  "void",	"volatile",	"while"
+];
+
+$("#ideArea").keyup(function(keyEvent) {
+	let allText = $(this).html();
+  let cursorPosition = getCaretPosition(this);
+	let startingSpace = allText.getLastIndexOf(" ")
+});
+
+function sendToServer() {
+	let rawText =  $("#ideArea").text();
+	$("#outputBox").html("Code Sent: " + rawText);
+}
+</script>
