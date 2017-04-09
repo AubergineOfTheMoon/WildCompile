@@ -7,8 +7,8 @@ namespace WildCompile.Models
 {
     public class CompileInput
     {
-        public string Code;
-        public string FileName;
-        public string Key;
+        public string code;
+        public string filename;
+        public string key;
     }
 }

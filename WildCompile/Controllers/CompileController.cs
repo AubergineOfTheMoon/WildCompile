@@ -22,24 +22,24 @@ namespace WildCompile.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CompileInput compile)
         {
-            compile.FileName = @"C:\Compile\Main.cs";
+            compile.filename = @"C:\Compile\Main.cs";
             if (System.IO.File.Exists(endResult))
             {
                 System.IO.File.Delete(endResult);
             }
-            if (System.IO.File.Exists(compile.FileName))
+            if (System.IO.File.Exists(compile.filename))
             {
-                System.IO.File.Delete(compile.FileName);
+                System.IO.File.Delete(compile.filename);
             }           
             
-            using (StreamWriter writer = System.IO.File.CreateText(compile.FileName))
+            using (StreamWriter writer = System.IO.File.CreateText(compile.filename))
             {
-                await writer.WriteAsync(compile.Code);
+                await writer.WriteAsync(compile.code);
                 await writer.FlushAsync();
             }
             string filesToCompile = "";
             filesToCompile += $"/out:{endResult}";
-            foreach (string file in new string[] { compile.FileName })
+            foreach (string file in new string[] { compile.filename })
             {
                 filesToCompile += " " + file;
             }
@@ -55,7 +55,15 @@ namespace WildCompile.Controllers
             {
                 return BadRequest(output.Substring(423));
             }
-            var exit = p.ExitCode;
+
+            Process userRun = new Process();
+            userRun.StartInfo.FileName = "C:\\Compile\\Runner\\Runner.exe"; //TODO:Enter file name
+            userRun.StartInfo.RedirectStandardOutput = true;
+            //userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
+            userRun.StartInfo.Arguments = $"{compile.key} C:\\Compile\\Main.exe ws://localhost:62299/ws";
+            userRun.Start();
+
+            output = userRun.StandardOutput.ReadToEnd();
 
             return Ok();
         }
