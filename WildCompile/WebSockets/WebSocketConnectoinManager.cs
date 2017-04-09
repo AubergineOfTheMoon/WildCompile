@@ -9,33 +9,42 @@ namespace WildCompile.WebSockets
 {
     public class WebSocketConnectionManager
     {
-        private ConcurrentDictionary<string, WebSocket> _sockets = new ConcurrentDictionary<string, WebSocket>();
+        private ConcurrentDictionary<string, UserSocket> _sockets = new ConcurrentDictionary<string, UserSocket>();
 
-        public WebSocket GetSocketById(string id)
+        public UserSocket GetSocketById(string id)
         {
-            return _sockets.FirstOrDefault(p => p.Key == id).Value;
+            return _sockets[id];
         }
 
-        public ConcurrentDictionary<string, WebSocket> GetAll()
+        public UserSocket GetSocketBySocket(WebSocket socket)
+        {
+            return _sockets.FirstOrDefault(p => p.Value.Socket == socket).Value;
+        }
+
+        public ConcurrentDictionary<string, UserSocket> GetAll()
         {
             return _sockets;
         }
 
         public string GetId(WebSocket socket)
         {
-            return _sockets.FirstOrDefault(p => p.Value == socket).Key;
+            return _sockets.Values.FirstOrDefault(p => p.Socket == socket).Id;
+            //return _sockets.FirstOrDefault(p => p.Value.Socket == socket).Key;
         }
         public void AddSocket(WebSocket socket)
         {
-            _sockets.TryAdd(CreateConnectionId(), socket);
+            string id = CreateConnectionId();
+            var userSocket = new UserSocket(socket, id);
+            _sockets.TryAdd(id, userSocket);
         }
 
         public async Task RemoveSocket(string id)
         {
-            WebSocket socket;
+            //WebSocket socket;
+            UserSocket socket;
             _sockets.TryRemove(id, out socket);
 
-            await socket.CloseAsync(closeStatus: WebSocketCloseStatus.NormalClosure,
+            await socket.Socket.CloseAsync(closeStatus: WebSocketCloseStatus.NormalClosure,
                                     statusDescription: "Closed by the WebSocketManager",
                                     cancellationToken: CancellationToken.None);
         }

@@ -40,15 +40,15 @@ namespace WildCompile.WebSockets
 
         public async Task SendMessageAsync(string socketId, string message)
         {
-            await SendMessageAsync(WebSocketConnectionManager.GetSocketById(socketId), message);
+            await SendMessageAsync(WebSocketConnectionManager.GetSocketById(socketId).Socket, message);
         }
 
         public async Task SendMessageToAllAsync(string message)
         {
             foreach (var pair in WebSocketConnectionManager.GetAll())
             {
-                if (pair.Value.State == WebSocketState.Open)
-                    await SendMessageAsync(pair.Value, message);
+                if (pair.Value.Socket.State == WebSocketState.Open)
+                    await SendMessageAsync(pair.Value.Socket, message);
             }
         }
 
