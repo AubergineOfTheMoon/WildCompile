@@ -15,41 +15,48 @@ Compile
 </button>
 
 <h4>
-Output:
+Output
 </h4>
 <div id="outputBox">
 
 </div>
-
+<input id="inputBox" type="textbox" hidden>
 </body>
 <script>
-    // Courtesy of: http://stackoverflow.com/questions/3972014/get-caret-position-in-contenteditable-div 
-function getCaretPosition(editableDiv) {
-  var caretPos = 0,
-    sel, range;
-  if (window.getSelection) {
-    sel = window.getSelection();
-    if (sel.rangeCount) {
-      range = sel.getRangeAt(0);
-      if (range.commonAncestorContainer.parentNode == editableDiv) {
-        caretPos = range.endOffset;
-      }
-    }
-  } else if (document.selection && document.selection.createRange) {
-    range = document.selection.createRange();
-    if (range.parentElement() == editableDiv) {
-      var tempEl = document.createElement("span");
-      editableDiv.insertBefore(tempEl, editableDiv.firstChild);
-      var tempRange = range.duplicate();
-      tempRange.moveToElementText(tempEl);
-      tempRange.setEndPoint("EndToEnd", range);
-      caretPos = tempRange.text.length;
-    }
-  }
-  return caretPos;
+  var socketKey;
+var tabSize = 4;
+var commandDict = {
+	clear : function(data) {
+  	$("#outputBox").empty();
+  },
+  input : function(data) {
+  	$("#inputBox").show();
+    $("#inputBox").focus();
+  },
+  print : function(data) {
+  	$("#outputBox").append(getFormattedString(data));
+  },
+  register : function(data) {
+  	socketKey = data;
+  },
 }
-
-
+const apiEndpoint = "http://ec2-54-234-53-50.compute-1.amazonaws.com/api/compile";
+const wsURL = "ws://ec2-54-234-53-50.compute-1.amazonaws.com/ws";
+$(document).ready(function() {
+	// setup web socket
+  socket = new WebSocket(wsURL);
+  socket.onrecieve(function(evt) {
+  	let dataJson = JSON.parse(evt.data);
+    commandDict[dataJson.cmd](dataJson.data);
+  });
+  $("#inputBox").keyup(function(evt) {
+  	if (evt.keyCode === 13) {
+    	socket.send("{cmd:\"input\",data:\"" + $(this).val() + "\"}");
+      $(this).hide();
+    }
+  });
+});
+var seperatorRegex = /W/;
 var reservedWords = [
   "abstract",	"as",	"base",	"bool",	"break",	"byte",
   "case",	"catch",	"char",	"checked",	"class",	"const",
@@ -66,14 +73,48 @@ var reservedWords = [
   "void",	"volatile",	"while"
 ];
 
+function getFormattedString(rawString) {
+	let formattedString = rawString.replace("\t", getTab()).replace("\n\r","<br/>").replace("\n","<br/>");
+  return formattedString;
+}
+
+function getTab() {
+	let tab = "";
+  for (var i = 0; i < tabSize; i++) {
+  	tab += "&nbsp";
+  }
+  return tab;
+}
+
 $("#ideArea").keyup(function(keyEvent) {
-	let allText = $(this).html();
-  let cursorPosition = getCaretPosition(this);
-	let startingSpace = allText.getLastIndexOf(" ")
+	if(keyEvent.which === 9) {
+  	
+  }
+	return;
+  let allText = $(this).html();
+  allText = allText.replace(/<\/div>/, "");
+  let lines = allText.split(/<div>/);
+  for (let line = 0; line < lines.length; line++) {
+  	let words = lines[line].split(seperatorRegex);
+    let splitter = lines[line].split(/w/);
+    for (let word = 0; word < words.length; word++) {
+    	
+    }
 });
 
 function sendToServer() {
 	let rawText =  $("#ideArea").text();
 	$("#outputBox").html("Code Sent: " + rawText);
+  $.ajax({
+  	type:"POST",
+    url:apiEndpoint,
+    success:function() {
+    
+    },
+    failure:function(status, error) {
+    	$("#outputBox").addClass("error");
+      $("#outputBox").html(error);
+    }
+  });
 }
 </script>
